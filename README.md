@@ -28,8 +28,9 @@ Stack: **Node.js**, **Express**, **TypeScript**.
 
 - Node.js 20+
 - npm
+- Docker 24+ and Docker Compose v2 (for the containerised workflow below)
 
-### Install and run
+### Install and run (host)
 
 ```bash
 cd creditra-backend
@@ -50,6 +51,71 @@ npm start
 ```
 
 API base: [http://localhost:3000](http://localhost:3000).
+
+---
+
+## Docker (local development)
+
+The fastest way to get the full stack (API + PostgreSQL) running locally without installing Node or Postgres on your host machine.
+
+### Quickstart
+
+```bash
+# 1. Copy the example env file and fill in your values
+cp .env.example .env
+
+# 2. Build the image and start all services (API + db)
+docker compose up --build
+
+# 3. (Separate terminal) Apply database migrations
+docker compose exec api npm run db:migrate
+
+# Stop everything and remove containers
+docker compose down
+
+# Stop and also delete the postgres volume (wipes DB data)
+docker compose down -v
+```
+
+The API hot-reloads on every source-file save (via `tsx watch`) thanks to the bind-mount in `docker-compose.yml`.
+
+### Ports
+
+| Service  | Host port | Container port | Notes                                    |
+|----------|-----------|----------------|------------------------------------------|
+| API      | `3000`    | `3000`         | `http://localhost:3000` · Swagger at `/docs` |
+| Postgres | `5432`    | `5432`         | Direct access via psql / TablePlus       |
+
+### Environment files
+
+| File            | Purpose                                                  |
+|-----------------|----------------------------------------------------------|
+| `.env.example`  | Committed template — lists every variable with safe defaults |
+| `.env`          | Your local overrides — **gitignored, never committed**   |
+
+`docker compose` reads `.env` automatically. The `DATABASE_URL` set inside `docker-compose.yml` overrides whatever is in `.env` so the API always reaches the `db` service by its compose hostname.
+
+> **Security notes**
+> - Containers run as the non-root `node` user (UID 1000).
+> - `API_KEYS` and `WEBHOOK_SECRET` must be changed from the placeholder values before any real traffic is served.
+> - The Postgres password in `docker-compose.yml` is intentionally simple for local dev; never reuse it in staging/production environments.
+> - Stellar private keys and PII should never be stored in `.env` files checked into version control.
+
+### Multi-stage image targets
+
+| Target        | Used by             | Includes devDeps | Start command    |
+|---------------|---------------------|------------------|------------------|
+| `development` | `docker compose up` | ✅ Yes            | `npm run dev`    |
+| `build`       | intermediate        | ✅ Yes            | `npm run build`  |
+| `runner`      | production deploys  | ❌ No             | `node dist/index.js` |
+
+Build the production image directly with:
+
+```bash
+docker build --target runner -t creditra-backend:latest .
+```
+
+---
 
 ### Environment
 
