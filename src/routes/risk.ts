@@ -1,6 +1,6 @@
 import { Router } from 'express';
-import { validateBody } from '../middleware/validate.js';
-import { riskEvaluateSchema } from '../schemas/index.js';
+import { validateBody, validateQuery } from '../middleware/validate.js';
+import { riskEvaluateSchema, riskHistoryQuerySchema } from '../schemas/index.js';
 import type { RiskEvaluateBody } from '../schemas/index.js';
 import { Router, Request, Response } from "express";
 import { evaluateWallet, InvalidWalletAddressError } from "../services/riskService.js";
@@ -108,7 +108,7 @@ riskRouter.get('/wallet/:walletAddress/latest', async (req, res) => {
   }
 });
 
-riskRouter.get('/wallet/:walletAddress/history', async (req, res) => {
+riskRouter.get('/wallet/:walletAddress/history', validateQuery(riskHistoryQuerySchema), async (req, res) => {
   try {
     const { offset, limit } = req.query;
     const offsetNum = offset ? parseInt(offset as string) : undefined;

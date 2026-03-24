@@ -1,7 +1,8 @@
 import { Router } from 'express';
-import { validateBody } from '../middleware/validate.js';
+import { validateBody, validateQuery } from '../middleware/validate.js';
 import {
   createCreditLineSchema,
+  transactionHistoryQuerySchema,
   drawSchema,
   repaySchema,
 } from '../schemas/index.js';
@@ -215,7 +216,7 @@ router.post(
 // Admin endpoints – require a valid API key via `X-API-Key` header
 // ---------------------------------------------------------------------------
 
-creditRouter.get("/lines/:id/transactions", (req: Request, res: Response): void => {
+creditRouter.get("/lines/:id/transactions", validateQuery(transactionHistoryQuerySchema), (req: Request, res: Response): void => {
   const id = req.params["id"] as string;
   const { type, from, to, page: pageParam, limit: limitParam } = req.query;
 

@@ -1,4 +1,10 @@
 import { z } from 'zod';
+import { TransactionType } from '../models/Transaction.js';
+
+const numericString = /^\d+(\.\d+)?$/;
+const isoDateTime = z.string().datetime({ offset: true });
+const positiveIntString = z.coerce.number().int().positive();
+const nonNegativeIntString = z.coerce.number().int().min(0);
 
 /** Schema for POST /api/credit/lines — create a credit line */
 export const createCreditLineSchema = z.object({
@@ -8,17 +14,25 @@ export const createCreditLineSchema = z.object({
     .max(256, 'walletAddress must be at most 256 characters'),
   requestedLimit: z
     .string({ required_error: 'requestedLimit is required' })
-    .regex(/^\d+(\.\d+)?$/, 'requestedLimit must be a numeric string'),
-});
+    .regex(numericString, 'requestedLimit must be a numeric string'),
+}).strict();
 
 export type CreateCreditLineBody = z.infer<typeof createCreditLineSchema>;
+
+/** Schema for GET /api/credit/lines (pagination query) */
+export const creditLinesQuerySchema = z.object({
+  offset: nonNegativeIntString.optional(),
+  limit: positiveIntString.max(100).optional(),
+}).strict();
+
+export type CreditLinesQuery = z.infer<typeof creditLinesQuerySchema>;
 
 /** Schema for POST /api/credit/lines/:id/draw — draw from a credit line */
 export const drawSchema = z.object({
   amount: z
     .string({ required_error: 'amount is required' })
-    .regex(/^\d+(\.\d+)?$/, 'amount must be a numeric string'),
-});
+    .regex(numericString, 'amount must be a numeric string'),
+}).strict();
 
 export type DrawBody = z.infer<typeof drawSchema>;
 
@@ -26,7 +40,18 @@ export type DrawBody = z.infer<typeof drawSchema>;
 export const repaySchema = z.object({
   amount: z
     .string({ required_error: 'amount is required' })
-    .regex(/^\d+(\.\d+)?$/, 'amount must be a numeric string'),
-});
+    .regex(numericString, 'amount must be a numeric string'),
+}).strict();
 
 export type RepayBody = z.infer<typeof repaySchema>;
+
+/** Schema for GET /api/credit/lines/:id/transactions (filters + pagination query) */
+export const transactionHistoryQuerySchema = z.object({
+  type: z.nativeEnum(TransactionType).optional(),
+  from: isoDateTime.optional(),
+  to: isoDateTime.optional(),
+  page: positiveIntString.optional(),
+  limit: positiveIntString.max(100).optional(),
+}).strict();
+
+export type TransactionHistoryQuery = z.infer<typeof transactionHistoryQuerySchema>;
