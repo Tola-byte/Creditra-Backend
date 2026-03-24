@@ -89,8 +89,8 @@ paths:
       operationId: getCreditLineTransactions
       summary: List transaction history for a credit line
       description: |
-        Returns a paginated list of transactions (draws, repayments, and status
-        changes) for the given credit line. Supports optional filtering by
+        Returns a paginated list of transactions for the given credit line.
+        Supports optional filtering by
         transaction type and date range.
       parameters:
         - name: id
@@ -104,7 +104,7 @@ paths:
           required: false
           schema:
             type: string
-            enum: [draw, repayment, status_change]
+            enum: [borrow, repay, interest_accrual, fee, status_change]
           description: Filter by transaction type
         - name: from
           in: query
@@ -168,7 +168,7 @@ paths:
                 $ref: "#/components/schemas/ErrorResponse"
               example:
                 data: null
-                error: "Invalid type filter. Must be one of: draw, repayment, status_change."
+                error: "Invalid type filter. Must be one of: borrow, repay, interest_accrual, fee, status_change."
         "404":
           description: Credit line not found
           content:
@@ -284,7 +284,7 @@ components:
           description: ID of the credit line this transaction belongs to
         type:
           type: string
-          enum: [draw, repayment, status_change]
+          enum: [borrow, repay, interest_accrual, fee, status_change]
           description: Transaction type
         amount:
           type: string

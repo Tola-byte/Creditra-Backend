@@ -20,7 +20,7 @@ import {
   getTransactions,
   CreditLineNotFoundError,
   InvalidTransitionError,
-  type TransactionType,
+  TransactionType,
   drawFromCreditLine
 } from "../services/creditService.js";
 
@@ -50,7 +50,7 @@ creditRouter.get('/lines', async (req, res) => {
 // allowing the env var to be set after module import (e.g. in tests).
 const requireApiKey = createApiKeyMiddleware(() => loadApiKeys());
 
-const VALID_TRANSACTION_TYPES: TransactionType[] = ["draw", "repayment", "status_change"];
+const VALID_TRANSACTION_TYPES = Object.values(TransactionType);
 
 function handleServiceError(err: unknown, res: Response): void {
   if (err instanceof CreditLineNotFoundError) {
