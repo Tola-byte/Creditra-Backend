@@ -4,12 +4,12 @@ import { z } from "zod";
 export const createCreditLineSchema = z.object({
   walletAddress: z
     .string()
-    .min(1, "walletAddress is required")
-    .max(256, "walletAddress must be at most 256 characters"),
+    .min(1, 'walletAddress is required')
+    .max(256, 'walletAddress must be at most 256 characters'),
   requestedLimit: z
     .string()
-    .min(1, "requestedLimit is required")
-    .regex(/^\d+(\.\d+)?$/, "requestedLimit must be a numeric string"),
+    .min(1, 'requestedLimit is required')
+    .regex(/^\d+(\.\d+)?$/, 'requestedLimit must be a numeric string'),
 });
 
 export type CreateCreditLineBody = z.infer<typeof createCreditLineSchema>;
@@ -18,8 +18,8 @@ export type CreateCreditLineBody = z.infer<typeof createCreditLineSchema>;
 export const drawSchema = z.object({
   amount: z
     .string()
-    .min(1, "amount is required")
-    .regex(/^\d+(\.\d+)?$/, "amount must be a numeric string"),
+    .min(1, 'amount is required')
+    .regex(/^\d+(\.\d+)?$/, 'amount must be a numeric string'),
 });
 
 export type DrawBody = z.infer<typeof drawSchema>;
@@ -28,8 +28,8 @@ export type DrawBody = z.infer<typeof drawSchema>;
 export const repaySchema = z.object({
   amount: z
     .string()
-    .min(1, "amount is required")
-    .regex(/^\d+(\.\d+)?$/, "amount must be a numeric string"),
+    .min(1, 'amount is required')
+    .regex(/^\d+(\.\d+)?$/, 'amount must be a numeric string'),
 });
 
 export type RepayBody = z.infer<typeof repaySchema>;

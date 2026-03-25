@@ -1,58 +1,105 @@
-import { Router, type Request, type Response } from "express";
+import { Router, Request, Response } from "express";
 import { validateBody } from "../middleware/validate.js";
+import { riskEvaluateSchema } from "../schemas/index.js";
+import { Container } from "../container/Container.js";
 import { createApiKeyMiddleware } from "../middleware/auth.js";
 import { loadApiKeys } from "../config/apiKeys.js";
-import { riskEvaluateSchema } from "../schemas/index.js";
-import type { RiskEvaluateBody } from "../schemas/index.js";
-import {
-  evaluateWallet,
-  InvalidWalletAddressError,
-} from "../services/riskService.js";
-import { isValidStellarPublicKey } from "../utils/stellarAddress.js";
 import { ok, fail } from "../utils/response.js";
 
 export const riskRouter = Router();
 
+// ✅ required
+const container = Container.getInstance();
+
+// Lazy API key loader
 const requireApiKey = createApiKeyMiddleware(() => loadApiKeys());
 
+// ---------------------------------------------------------------------------
 // Public endpoints
+// ---------------------------------------------------------------------------
 
+/**
+ * POST /api/risk/evaluate
+ */
 riskRouter.post(
   "/evaluate",
   validateBody(riskEvaluateSchema),
-  async (req: Request, res: Response): Promise<void> => {
-    const { walletAddress } = req.body as RiskEvaluateBody;
-
-    if (
-      typeof walletAddress !== "string" ||
-      walletAddress.trim().length === 0
-    ) {
-      fail(res, "walletAddress is required", 400);
-      return;
-    }
-
-    const normalizedWalletAddress = walletAddress.trim();
-
-    if (!isValidStellarPublicKey(normalizedWalletAddress)) {
-      fail(res, "Invalid wallet address format.", 400);
-      return;
-    }
-
+  async (req: Request, res: Response) => {
     try {
-      const result = await evaluateWallet(normalizedWalletAddress);
-      ok(res, result);
-    } catch (err) {
-      if (err instanceof InvalidWalletAddressError) {
-        fail(res, err.message, 400);
-        return;
+      const { walletAddress, forceRefresh } = req.body ?? {};
+
+      // ✅ keep strict null safety
+      if (!walletAddress || typeof walletAddress !== "string") {
+        return res.status(400).json({ error: "walletAddress required" });
       }
 
-      fail(res, "Unable to evaluate wallet at this time.", 500);
+      const result = await container.riskEvaluationService.evaluateRisk({
+        walletAddress,
+        forceRefresh,
+      });
+
+      return ok(res, result);
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : "Failed to evaluate risk";
+      return res.status(500).json({ error: message });
     }
   },
 );
 
+/**
+ * GET latest evaluation
+ */
+riskRouter.get("/wallet/:walletAddress/latest", async (req, res) => {
+  try {
+    const evaluation =
+      await container.riskEvaluationService.getLatestRiskEvaluation(
+        req.params.walletAddress,
+      );
+
+    if (!evaluation) {
+      return res
+        .status(404)
+        .json({ error: "No risk evaluation found for wallet" });
+    }
+
+    return res.json(evaluation);
+  } catch {
+    return res
+      .status(500)
+      .json({ error: "Failed to fetch latest risk evaluation" });
+  }
+});
+
+/**
+ * GET evaluation history
+ */
+riskRouter.get("/wallet/:walletAddress/history", async (req, res) => {
+  try {
+    const { offset, limit } = req.query;
+
+    const offsetNum =
+      typeof offset === "string" ? Number.parseInt(offset, 10) : undefined;
+
+    const limitNum =
+      typeof limit === "string" ? Number.parseInt(limit, 10) : undefined;
+
+    const evaluations =
+      await container.riskEvaluationService.getRiskEvaluationHistory(
+        req.params.walletAddress,
+        offsetNum,
+        limitNum,
+      );
+
+    res.json({ evaluations });
+  } catch {
+    res.status(500).json({ error: "Failed to fetch risk evaluation history" });
+  }
+});
+
+// ---------------------------------------------------------------------------
 // Admin endpoints
+// ---------------------------------------------------------------------------
 
 riskRouter.post(
   "/admin/recalibrate",
@@ -61,3 +108,5 @@ riskRouter.post(
     ok(res, { message: "Risk model recalibration triggered" });
   },
 );
+
+export default riskRouter;
