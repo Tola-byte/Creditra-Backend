@@ -14,7 +14,6 @@ import {
 export const riskRouter = Router();
 const container = Container.getInstance();
 const requireApiKey = createApiKeyMiddleware(() => loadApiKeys());
-
 /**
  * POST /api/risk/evaluate
  * Evaluate risk for a wallet. Uses schema validation as the single entrypoint.

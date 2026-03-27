@@ -9,11 +9,12 @@ const nonNegativeIntString = z.coerce.number().int().min(0);
 /** Schema for POST /api/credit/lines — create a credit line */
 export const createCreditLineSchema = z.object({
   walletAddress: z
-    .string({ required_error: 'walletAddress is required' })
-    .min(1, 'walletAddress must not be empty')
+    .string()
+    .min(1, 'walletAddress is required')
     .max(256, 'walletAddress must be at most 256 characters'),
   requestedLimit: z
-    .string({ required_error: 'requestedLimit is required' })
+    .string()
+    .min(1, 'requestedLimit is required')
     .regex(numericString, 'requestedLimit must be a numeric string'),
 }).strict();
 
@@ -30,7 +31,8 @@ export type CreditLinesQuery = z.infer<typeof creditLinesQuerySchema>;
 /** Schema for POST /api/credit/lines/:id/draw — draw from a credit line */
 export const drawSchema = z.object({
   amount: z
-    .string({ required_error: 'amount is required' })
+    .string()
+    .min(1, 'amount is required')
     .regex(numericString, 'amount must be a numeric string'),
 }).strict();
 
@@ -39,7 +41,8 @@ export type DrawBody = z.infer<typeof drawSchema>;
 /** Schema for POST /api/credit/lines/:id/repay — repay a credit line */
 export const repaySchema = z.object({
   amount: z
-    .string({ required_error: 'amount is required' })
+    .string()
+    .min(1, 'amount is required')
     .regex(numericString, 'amount must be a numeric string'),
 }).strict();
 

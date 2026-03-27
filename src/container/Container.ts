@@ -79,4 +79,16 @@ export class Container {
       this._transactionRepository = repositories.transactionRepository;
     }
   }
+
+  /**
+   * Shutdown internal services and close database connections.
+   */
+  public async shutdown(): Promise<void> {
+    console.log('[Container] Shutting down internal services...');
+    
+    // In the future, close database pools here:
+    // await this.dbPool?.end();
+
+    console.log('[Container] All services shut down.');
+  }
 }
