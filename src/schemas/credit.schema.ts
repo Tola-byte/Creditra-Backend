@@ -1,4 +1,4 @@
-import { z } from 'zod';
+import { z } from "zod";
 
 /** Schema for POST /api/credit/lines — create a credit line */
 export const createCreditLineSchema = z.object({

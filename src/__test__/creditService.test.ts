@@ -12,7 +12,7 @@ import {
   _resetStore,
   _store,
   _transactionStore,
-} from "../../services/creditService.js";
+} from "../services/creditService.js";
 
 
     
