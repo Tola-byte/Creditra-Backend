@@ -224,6 +224,7 @@ paths:
               $ref: "#/components/schemas/RiskEvaluateRequest"
             example:
               walletAddress: "0xAbC1234567890abcdef1234567890abcdef123456"
+              forceRefresh: false
       responses:
         "200":
           description: Risk evaluation result
@@ -297,6 +298,10 @@ components:
           type: string
           description: EVM-compatible wallet address
           example: "0xAbC1234567890abcdef1234567890abcdef123456"
+        forceRefresh:
+          type: boolean
+          description: Optional hint to bypass cache and recalculate risk
+          default: false
 
     RiskEvaluateResponse:
       type: object
