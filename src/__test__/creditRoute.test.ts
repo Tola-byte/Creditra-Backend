@@ -1,26 +1,24 @@
 import express, { type Response, type Express } from "express";
 import request from "supertest";
-import { jest } from "@jest/globals";
 import {
   _resetStore,
   createCreditLine,
   suspendCreditLine,
   closeCreditLine,
 } from "../services/creditService.js";
+import { TransactionType } from "../models/Transaction.js";
 
 // Mock adminAuth so we can control auth pass/fail from within tests
-jest.mock("../../middleware/adminAuth.js", () => ({
-  adminAuth: jest.fn((_req: unknown, _res: unknown, next: () => void) =>
-    next(),
-  ),
+vi.mock("../middleware/adminAuth.js", () => ({
+  adminAuth: vi.fn((_req: unknown, _res: unknown, next: () => void) => next()),
   ADMIN_KEY_HEADER: "x-admin-api-key",
 }));
 
-import { creditRouter } from "../routes/credit.js";
+import creditRouter from "../routes/credit.js";
 import { adminAuth } from "../middleware/adminAuth.js";
-import { afterEach, beforeEach } from "node:test";
+import { afterEach, beforeEach, vi } from "vitest";
 
-const mockAdminAuth = adminAuth as jest.MockedFunction<typeof adminAuth>;
+const mockAdminAuth = vi.mocked(adminAuth);
 
 function buildApp(): Express {
   const app = express();
@@ -292,7 +290,7 @@ describe("GET /api/credit/lines/:id/transactions", () => {
       `/api/credit/lines/${VALID_ID}/transactions`,
     );
     expect(res.body.data.transactions).toHaveLength(1);
-    expect(res.body.data.transactions[0].type).toBe("status_change");
+    expect(res.body.data.transactions[0].type).toBe(TransactionType.STATUS_CHANGE);
     expect(res.body.data.transactions[0].metadata.action).toBe("created");
   });
 
@@ -305,6 +303,11 @@ describe("GET /api/credit/lines/:id/transactions", () => {
     );
     expect(res.body.data.total).toBe(3);
     expect(res.body.data.transactions).toHaveLength(3);
+    expect(res.body.data.transactions.map((tx: { metadata: { action: string } }) => tx.metadata.action)).toEqual([
+      "closed",
+      "suspended",
+      "created",
+    ]);
   });
 
   it("returns 404 with error containing id for an unknown credit line", async () => {
@@ -326,12 +329,12 @@ describe("GET /api/credit/lines/:id/transactions", () => {
     createCreditLine(VALID_ID);
     suspendCreditLine(VALID_ID);
     const res = await request(buildApp()).get(
-      `/api/credit/lines/${VALID_ID}/transactions?type=status_change`,
+      `/api/credit/lines/${VALID_ID}/transactions?type=${TransactionType.STATUS_CHANGE}`,
     );
     expect(res.status).toBe(200);
     expect(
       res.body.data.transactions.every(
-        (tx: { type: string }) => tx.type === "status_change",
+        (tx: { type: string }) => tx.type === TransactionType.STATUS_CHANGE,
       ),
     ).toBe(true);
   });
@@ -339,7 +342,7 @@ describe("GET /api/credit/lines/:id/transactions", () => {
   it("returns empty transactions array when type filter has no matches", async () => {
     createCreditLine(VALID_ID);
     const res = await request(buildApp()).get(
-      `/api/credit/lines/${VALID_ID}/transactions?type=draw`,
+      `/api/credit/lines/${VALID_ID}/transactions?type=${TransactionType.BORROW}`,
     );
     expect(res.status).toBe(200);
     expect(res.body.data.transactions).toHaveLength(0);
@@ -438,7 +441,7 @@ describe("GET /api/credit/lines/:id/transactions", () => {
     );
     expect(res.status).toBe(200);
     expect(res.body.data.transactions).toHaveLength(1);
-    expect(res.body.data.transactions[0].metadata.action).toBe("closed");
+    expect(res.body.data.transactions[0].metadata.action).toBe("created");
   });
 
   it("filters by valid 'from' date excluding older transactions", async () => {

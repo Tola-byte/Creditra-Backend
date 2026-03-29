@@ -7,7 +7,7 @@ import { loadApiKeys } from "../config/apiKeys.js";
 import { ok, fail } from "../utils/response.js";
 import {
   CreditLineNotFoundError,
-  type TransactionType,
+  TransactionType,
 } from "../services/creditService.js";
 
 export const creditRouter = Router();
@@ -17,11 +17,7 @@ const container = Container.getInstance();
 
 const requireApiKey = createApiKeyMiddleware(() => loadApiKeys());
 
-const VALID_TRANSACTION_TYPES: readonly TransactionType[] = [
-  "draw",
-  "repayment",
-  "status_change",
-];
+const VALID_TRANSACTION_TYPES = Object.values(TransactionType);
 
 function handleServiceError(err: unknown, res: Response): void {
   if (err instanceof CreditLineNotFoundError) {
